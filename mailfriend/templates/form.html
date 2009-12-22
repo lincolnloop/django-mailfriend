@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>E-mail to a friend</h2>
+  <p>To e-mail <a href="{{ object.get_absolute_url }}">{{ object }}</a> to a friend, fill out the short form below. Note that if you select "Use my e-mail address as from address", your e-mail address will be visible to your friend, and they will be able to reply to you. If you do not select this box, your friend will receive an e-mail from an address that does not accept replies and they will <em>not</em> be able to see your e-mail address.</p>
+  <form action="{% url mail_item_to_friend_send %}" method="post">
+    <input type="hidden" id="id_content_type" name="content_type" value="{{ content_type.id }}">
+    <input type="hidden" id="id_object_id" name="object_id" value="{{ object.id }}">
+    <label for="id_mailed_to">Mail to:</label> {{ form.mailed_to }}
+    <label for="id_user_email_as_from">Use my e-mail address as from address:</label> {{ form.user_email_as_from }}
+    <label for="id_send_to_user_also">Send myself a copy of this e-mail:</label> {{ form.send_to_user_also }}
+    <input type="submit" value="submit" />
+  </form>
+{% endblock %}

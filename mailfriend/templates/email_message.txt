@@ -1,0 +1,11 @@
+Hi!
+
+Your friend {% firstof sending_user.get_full_name sending_user.username %} has sent you an item from {{ site.name }}. The item {% firstof sending_user.get_full_name sending_user.username %} would like you to see is entitled {% firstof object.title object.name object %}. You can view it using the following link:
+
+{{ url_to_mail }}
+
+We hope you enjoy your content from {{ site.name }}.
+
+Sincerely,
+The {{ site.name }} team
+{{ site_url }}

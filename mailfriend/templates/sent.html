@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>Message sent!</h2>
+  <p>You probably want to <a href="{{ object.get_absolute_url }}">go back to {% firstof object.title object.name object %}</a>.</p>
+{% endblock %}
