@@ -59,7 +59,7 @@ def mail_item_to_friend_form(request, content_type_id, object_id):
 @login_required
 def mail_item_to_friend_send(request):
     """
-    Parses the form and sends the email. (Login required)
+    Parses the form and sends the email. (Login required, POST required)
 
     **Context:**
 
