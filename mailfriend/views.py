@@ -60,14 +60,14 @@ def mail_item_to_friend_send(request):
       'sending_user': sending_user,
   })
   message           = message_template.render(message_context)
-  recipeient_list   = [request.POST['mailed_to']]
+  recipient_list   = [request.POST['mailed_to']]
   if request.POST.has_key('send_to_user_also'):
-    recipeient_list.append(request.user.email)
+    recipient_list.append(request.user.email)
   if request.POST.has_key('user_email_as_from'):
     from_address    = request.user.email
   else:
     from_address    = settings.DEFAULT_FROM_EMAIL
-  send_mail(subject, message, from_address, recipeient_list, fail_silently=False)
+  send_mail(subject, message, from_address, recipient_list, fail_silently=False)
   mailed_item       = MailedItem(date_mailed=datetime.datetime.now(), mailed_by=sending_user)
   form              = MailedItemForm(request.POST, instance=mailed_item)
   new_mailed_item   = form.save()
