@@ -1,0 +1,5 @@
+This simple app allows you to include an "e-mail this to a friend" link (as seen on many newspaper websites) on any page that can be accessed via a get_absolute_url() method.
+
+The sending user must be a registered user; the recipient can be anyone with an e-mail address.
+
+The app handles displaying a form to the user, sending the e-mail, and returning a confirmation page.
