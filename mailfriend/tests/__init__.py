@@ -9,7 +9,7 @@ from django.db.models.loading import load_app
 from mailfriend.views import mail_item_to_friend_send
 from fakeapp.models import FakeItem
 
-class TestMyApp(TestCase):
+class MailfriendTest(TestCase):
     urls = 'mailfriend.tests.urls'
     
     def setUp(self):
