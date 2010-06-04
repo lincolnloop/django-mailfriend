@@ -13,9 +13,10 @@ class MailedItem(models.Model):
     mailed_to = models.EmailField()
     user_email_as_from = models.BooleanField(default=False)
     send_to_user_also = models.BooleanField(default=False)
-    date_mailed = models.DateTimeField(default=datetime.datetime.now, editable=False)
+    date_mailed = models.DateTimeField(default=datetime.datetime.now, 
+                                       editable=False)
 
     def __unicode__(self):
-        return "%s: To %s, from %s" % (unicode(self.content_object), 
+        return "%s: To %s, from %s" % (self.content_object, 
                                        self.mailed_to, 
-                                       unicode(self.mailed_by))
+                                       self.mailed_by)

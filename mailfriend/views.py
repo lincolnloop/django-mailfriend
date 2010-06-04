@@ -17,7 +17,6 @@ try:
 except ImportError:
     from django.core.mail import send_mail
 
-from mailfriend.models import MailedItem
 from mailfriend.forms import MailedItemForm
 from mailfriend.utils import generic_object_get
 
@@ -113,8 +112,8 @@ def mail_item_to_friend_send(request):
                   recipient_list, fail_silently=False)
         
         # save email to database
-        mailed_item.date_mailed=datetime.datetime.now()
-        mailed_item.mailed_by=sending_user
+        mailed_item.date_mailed = datetime.datetime.now()
+        mailed_item.mailed_by = sending_user
         mailed_item.save()
         
         context = Context({ 'object': obj })
