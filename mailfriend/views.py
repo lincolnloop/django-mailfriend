@@ -106,7 +106,14 @@ def mail_item_to_friend_send(request):
     mailed_item = MailedItem(date_mailed=datetime.datetime.now(), 
                              mailed_by=sending_user)
     form = MailedItemForm(request.POST, instance=mailed_item)
-    form.save()
+    if form.is_valid():
+        form.save()
+    else:
+        return render_to_response('mailfriend/form.html',  {
+            'content_type': content_type,
+            'form': form,
+            'object': obj,
+        }, context_instance=RequestContext(request))
     context = Context({ 'object': obj })
     return render_to_response('mailfriend/sent.html', context, 
                               context_instance=RequestContext(request))
