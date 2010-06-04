@@ -3,10 +3,10 @@ import datetime
 from django.shortcuts import render_to_response
 from django.http import Http404
 from django.contrib.sites.models import Site
-from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ObjectDoesNotExist
 from django.template import RequestContext, loader, Context
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
+
 from django.contrib.auth.decorators import login_required
 
 # If djano-mailer (http://code.google.com/p/django-mailer/) is available,
@@ -19,6 +19,7 @@ except ImportError:
 
 from mailfriend.models import MailedItem
 from mailfriend.forms import MailedItemForm
+from mailfriend.utils import generic_object_get
 
 @login_required
 def mail_item_to_friend_form(request, content_type_id, object_id):
@@ -40,13 +41,14 @@ def mail_item_to_friend_form(request, content_type_id, object_id):
     
     """
 
-    content_type = ContentType.objects.get(pk=content_type_id)
     try:
-        obj = content_type.get_object_for_this_type(pk=object_id)
+        content_type, obj = generic_object_get(int(content_type_id), 
+                                               int(object_id))
         obj.get_absolute_url()
     except (ObjectDoesNotExist, AttributeError):
         raise Http404, "Invalid -- the object ID was invalid or does not have a get_absolute_url() method"
-    form = MailedItemForm()
+    initial_data = {'content_type':content_type.pk, 'object_id':obj.pk}
+    form = MailedItemForm(initial=initial_data)
     context = {
         'content_type': content_type,
         'form': form,
@@ -73,50 +75,59 @@ def mail_item_to_friend_send(request):
     """
     if not request.POST:
         raise Http404, "Only POSTs are allowed"
-    content_type = ContentType.objects.get(pk=int(request.POST['content_type']))
+    form = MailedItemForm(request.POST)
     try:
-        obj = content_type.get_object_for_this_type(
-                                            pk=int(request.POST['object_id']))
-        obj_url = obj.get_absolute_url()
+        content_type, obj = form.check_generic_object()
     except ObjectDoesNotExist:
-        raise Http404, "The send to friend form had an invalid 'target' parameter -- the object ID was invalid"
-    site = Site.objects.get_current()
-    site_url = 'http://%s/' % site.domain
-    url_to_mail = 'http://%s%s' % (site.domain, obj_url)
-    sending_user = request.user
-    subject = "You have received a link"
-    message_template = loader.get_template('mailfriend/email_message.txt')
-    message_context = Context({ 
-        'site': site,
-        'site_url': site_url,
-        'object': obj,
-        'url_to_mail': url_to_mail,
-        'sending_user': sending_user,
-    })
-    message = message_template.render(message_context)
-    recipient_list = [request.POST['mailed_to']]
-    if request.POST.has_key('send_to_user_also'):
-        recipient_list.append(request.user.email)
-    if request.POST.has_key('user_email_as_from'):
-        from_address = request.user.email
-    else:
-        from_address = settings.DEFAULT_FROM_EMAIL
-    send_mail(subject, message, from_address, 
-              recipient_list, fail_silently=False)
-    mailed_item = MailedItem(date_mailed=datetime.datetime.now(), 
-                             mailed_by=sending_user)
-    form = MailedItemForm(request.POST, instance=mailed_item)
+        raise Http404, "Object does not exist"
     if form.is_valid():
-        form.save()
+        mailed_item = form.save(commit=False)
+        
+        # build full object URL
+        site = Site.objects.get_current()
+        site_url = 'http://%s/' % site.domain
+        url_to_mail = 'http://%s%s' % (site.domain, obj.get_absolute_url())
+        
+        # render email
+        sending_user = request.user
+        subject = "You have received a link"
+        message_template = loader.get_template('mailfriend/email_message.txt')
+        message_context = Context({ 
+            'site': site,
+            'site_url': site_url,
+            'object': obj,
+            'url_to_mail': url_to_mail,
+            'sending_user': sending_user,
+        })
+        message = message_template.render(message_context)
+        
+        # send email
+        recipient_list = [mailed_item.mailed_to]
+        if mailed_item.send_to_user_also:
+            recipient_list.append(request.user.email)
+        if mailed_item.user_email_as_from:
+            from_address = request.user.email
+        else:
+            from_address = settings.DEFAULT_FROM_EMAIL
+        send_mail(subject, message, from_address, 
+                  recipient_list, fail_silently=False)
+        
+        # save email to database
+        mailed_item.date_mailed=datetime.datetime.now()
+        mailed_item.mailed_by=sending_user
+        mailed_item.save()
+        
+        context = Context({ 'object': obj })
+        return render_to_response('mailfriend/sent.html', context, 
+                                  context_instance=RequestContext(request))
+                                  
+    # form is invalid
     else:
         return render_to_response('mailfriend/form.html',  {
             'content_type': content_type,
             'form': form,
             'object': obj,
         }, context_instance=RequestContext(request))
-    context = Context({ 'object': obj })
-    return render_to_response('mailfriend/sent.html', context, 
-                              context_instance=RequestContext(request))
   
   
   

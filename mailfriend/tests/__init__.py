@@ -34,6 +34,21 @@ class MailfriendTest(TestCase):
         self.assertEquals(response['Location'], 
                          'http://testserver/accounts/login/?next=/mailfriend/send/')
     
+    def test_invalid_form(self):
+        """Invalid forms fail gracefully"""
+        self.client.login(username='test', password='test')
+        response = self.client.post('/mailfriend/send/', {
+                      'content_type':str(self.user_ct.pk),
+                      'object_id':str(self.user.pk),
+                      'mailed_to':'bad_email_address',
+                      'user_email_as_from':'on',
+                      'send_to_user_also':'on',
+              })
+        self.assertEquals(response.status_code, 200)
+        self.assertTemplateUsed(response, 'mailfriend/form.html')
+        self.assertEquals(len(mail.outbox), 0)
+        self.assertEquals(len(MailedItem.objects.all()), 0)
+    
     def test_send_to_user(self):
         """Sends an email and loads the correct page"""
         self.client.login(username='test', password='test')
